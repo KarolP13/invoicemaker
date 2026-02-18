@@ -43,6 +43,7 @@ export interface Invoice {
     // Additional
     notes: string;
     terms: string;
+    paymentInfo: string;
     currency: string;
 
     // Logo
@@ -73,6 +74,7 @@ export const defaultInvoice: Invoice = {
     total: 0,
     notes: '',
     terms: 'Payment is due within 30 days of invoice date.',
+    paymentInfo: '',
     currency: 'USD',
     logoScale: 1,
 };

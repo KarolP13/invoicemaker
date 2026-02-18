@@ -231,7 +231,7 @@ const ModernInvoicePreview: React.FC<Props> = ({ invoice, theme, scale = 1 }) =>
                         </div>
 
                         {/* ── Notes & Terms ── */}
-                        {(invoice.notes || invoice.terms) && (
+                        {(invoice.notes || invoice.terms || invoice.paymentInfo) && (
                             <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: sp }}>
                                 {invoice.notes && (
                                     <div style={{ marginBottom: 12 }}>
@@ -244,12 +244,26 @@ const ModernInvoicePreview: React.FC<Props> = ({ invoice, theme, scale = 1 }) =>
                                     </div>
                                 )}
                                 {invoice.terms && (
-                                    <div>
+                                    <div style={{ marginBottom: invoice.paymentInfo ? 12 : 0 }}>
                                         <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: colors.textSecondary, marginBottom: 4 }}>
                                             Terms & Conditions
                                         </div>
                                         <div style={{ fontSize: typography.baseFontSize - 1, color: colors.textSecondary, whiteSpace: 'pre-line' }}>
                                             {invoice.terms}
+                                        </div>
+                                    </div>
+                                )}
+                                {invoice.paymentInfo && (
+                                    <div>
+                                        <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: colors.textSecondary, marginBottom: 4 }}>
+                                            Payment Information
+                                        </div>
+                                        <div style={{
+                                            fontSize: typography.baseFontSize - 1, color: colors.textSecondary, whiteSpace: 'pre-line',
+                                            padding: '10px 12px', background: colors.tableAltRow || 'rgba(0,0,0,0.02)',
+                                            borderRadius: Math.max(br - 6, 4), border: `1px solid ${colors.border}`,
+                                        }}>
+                                            {invoice.paymentInfo}
                                         </div>
                                     </div>
                                 )}

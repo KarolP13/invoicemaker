@@ -103,6 +103,7 @@ const InvoiceForm: React.FC<Props> = ({ invoice, setField, setLogo }) => (
                     <input
                         className="modern-input"
                         type="number"
+                        inputMode="decimal"
                         min={0}
                         max={100}
                         step={0.5}
@@ -115,6 +116,7 @@ const InvoiceForm: React.FC<Props> = ({ invoice, setField, setLogo }) => (
                     <input
                         className="modern-input"
                         type="number"
+                        inputMode="decimal"
                         min={0}
                         max={100}
                         step={0.5}
@@ -130,6 +132,7 @@ const InvoiceForm: React.FC<Props> = ({ invoice, setField, setLogo }) => (
             <div className="section-label">Notes & Terms</div>
             <Field label="Notes" value={invoice.notes} onChange={(v) => setField('notes', v)} multiline placeholder="Thank you for your business!" />
             <Field label="Terms" value={invoice.terms} onChange={(v) => setField('terms', v)} multiline placeholder="Payment due within 30 days." />
+            <Field label="Payment Info" value={invoice.paymentInfo} onChange={(v) => setField('paymentInfo', v)} multiline placeholder="Bank: Chase &#10;Routing: 021000021 &#10;Account: 123456789" />
         </div>
     </div>
 );

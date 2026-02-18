@@ -258,7 +258,7 @@ const PDFInvoiceDocument: React.FC<PDFProps> = ({ invoice, theme }) => {
                 </View>
 
                 {/* Notes & Terms */}
-                {(invoice.notes || invoice.terms) && (
+                {(invoice.notes || invoice.terms || invoice.paymentInfo) && (
                     <View style={s.notes}>
                         {!!invoice.notes && (
                             <View style={{ marginBottom: 12 }}>
@@ -267,9 +267,15 @@ const PDFInvoiceDocument: React.FC<PDFProps> = ({ invoice, theme }) => {
                             </View>
                         )}
                         {!!invoice.terms && (
-                            <View>
+                            <View style={{ marginBottom: invoice.paymentInfo ? 12 : 0 }}>
                                 <Text style={s.notesLabel}>Terms & Conditions</Text>
                                 <Text style={s.notesText}>{invoice.terms}</Text>
+                            </View>
+                        )}
+                        {!!invoice.paymentInfo && (
+                            <View style={{ padding: 10, backgroundColor: '#f8f8fa', borderRadius: 3, borderWidth: 0.5, borderColor: '#e0e0e5' }}>
+                                <Text style={s.notesLabel}>Payment Information</Text>
+                                <Text style={s.notesText}>{invoice.paymentInfo}</Text>
                             </View>
                         )}
                     </View>
@@ -350,6 +356,7 @@ export function parseInvoiceJSON(text: string): Invoice {
         total: Number(data.total ?? 0),
         notes: data.notes ?? '',
         terms: data.terms ?? '',
+        paymentInfo: data.paymentInfo ?? '',
         currency: data.currency ?? 'USD',
         logoScale: Number(data.logoScale ?? 1),
     };
