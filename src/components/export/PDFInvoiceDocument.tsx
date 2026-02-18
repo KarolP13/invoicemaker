@@ -136,7 +136,7 @@ const s = StyleSheet.create({
         marginBottom: 6,
     },
     notesText: { fontSize: 9, color: '#555', lineHeight: 1.6 },
-    logo: { maxWidth: 120, maxHeight: 40, marginBottom: 10 },
+    logo: { marginBottom: 10, objectFit: 'contain' as const },
     detailRow: {
         flexDirection: 'row',
         marginBottom: 3,
@@ -169,7 +169,14 @@ const PDFInvoiceDocument: React.FC<PDFProps> = ({ invoice, theme }) => {
                 <View style={s.headerRow}>
                     <View style={{ maxWidth: '55%' }}>
                         {invoice.companyLogo && (
-                            <Image src={invoice.companyLogo} style={s.logo} />
+                            <Image
+                                src={invoice.companyLogo}
+                                style={{
+                                    ...s.logo,
+                                    width: Math.min(150, Math.round(100 * (invoice.logoScale || 1))),
+                                    height: Math.min(60, Math.round(40 * (invoice.logoScale || 1))),
+                                }}
+                            />
                         )}
                         <Text style={s.companyName}>{invoice.companyName || 'Your Company'}</Text>
                         {!!invoice.companyAddress && <Text style={s.secondaryLine}>{invoice.companyAddress}</Text>}
