@@ -34,24 +34,26 @@ const LogoUploader: React.FC<Props> = ({ logo, logoScale, onLogoChange, onLogoSc
 
             {logo ? (
                 <div>
-                    <div style={{ position: 'relative', display: 'inline-block', marginBottom: 12 }}>
+                    <div style={{
+                        position: 'relative', display: 'inline-block', marginBottom: 12,
+                        maxWidth: '100%', overflow: 'hidden', borderRadius: 8,
+                        background: 'rgba(255,255,255,0.05)', padding: 8,
+                    }}>
                         <img
                             src={logo}
                             alt="Logo"
                             style={{
-                                maxWidth: 140,
-                                maxHeight: 70,
+                                display: 'block',
+                                width: Math.round(120 * logoScale),
+                                height: 'auto',
+                                maxWidth: '100%',
+                                maxHeight: Math.round(80 * logoScale),
                                 objectFit: 'contain',
-                                borderRadius: 8,
-                                background: 'rgba(255,255,255,0.05)',
-                                padding: 8,
-                                transform: `scale(${logoScale})`,
-                                transformOrigin: 'top left',
                             }}
                         />
                         <button
                             className="btn btn-danger"
-                            style={{ position: 'absolute', top: -6, right: -6, padding: '4px 6px', fontSize: 11, borderRadius: 8 }}
+                            style={{ position: 'absolute', top: 4, right: 4, padding: '4px 6px', fontSize: 11, borderRadius: 8 }}
                             onClick={() => onLogoChange(null)}
                             title="Remove logo"
                         >
