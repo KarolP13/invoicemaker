@@ -1,80 +1,36 @@
 /**
- * Cloud Presets — save/load invoice presets via jsonblob.com
- *
- * Uses a single master blob to store all presets keyed by user-chosen codes.
- * jsonblob.com is free, requires no API key, and has no rate limits.
+ * Cloud Presets — save/load invoice presets via localStorage
+ * 
+ * Uses localStorage for reliable preset storage.
+ * Presets are shareable via exportable JSON codes.
  */
 import type { Invoice } from '../types/invoice.types';
 
-// ── jsonblob config ──────────────────────────
-const BLOB_API = 'https://jsonblob.com/api/jsonBlob';
-// We'll create the master blob on first save if it doesn't exist
-const MASTER_BLOB_KEY = 'invoice-creator-presets-v1';
+const STORAGE_KEY = 'invoice-creator-presets-v2';
 
 interface PresetStore {
     codes: Record<string, Partial<Invoice>>;
     _version: number;
 }
 
-// ── Local blob ID cache ──────────────────────
-function getBlobId(): string | null {
-    return localStorage.getItem(MASTER_BLOB_KEY);
-}
-
-function setBlobId(id: string): void {
-    localStorage.setItem(MASTER_BLOB_KEY, id);
-}
-
-// ── API helpers ──────────────────────────────
-
-async function createBlob(data: PresetStore): Promise<string> {
-    const res = await fetch(BLOB_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error(`Failed to create preset store (${res.status})`);
-    // The blob ID is in the Location header
-    const location = res.headers.get('Location') || '';
-    const id = location.split('/').pop() || '';
-    if (!id) throw new Error('Failed to get blob ID from response');
-    setBlobId(id);
-    return id;
-}
-
-async function fetchBlob(blobId: string): Promise<PresetStore> {
-    const res = await fetch(`${BLOB_API}/${blobId}`, {
-        headers: { Accept: 'application/json' },
-    });
-    if (!res.ok) {
-        if (res.status === 404) throw new Error('Preset store not found. Save a preset first.');
-        throw new Error(`Failed to fetch presets (${res.status})`);
-    }
-    return await res.json() as PresetStore;
-}
-
-async function updateBlob(blobId: string, data: PresetStore): Promise<void> {
-    const res = await fetch(`${BLOB_API}/${blobId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error(`Failed to save preset (${res.status})`);
-}
-
-async function getOrCreateStore(): Promise<{ store: PresetStore; blobId: string }> {
-    let blobId = getBlobId();
-    if (blobId) {
-        try {
-            const store = await fetchBlob(blobId);
-            return { store, blobId };
-        } catch {
-            // Blob may have expired, create new one
+// ── Storage helpers ──────────────────────────
+function getStore(): PresetStore {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+            const parsed = JSON.parse(raw) as PresetStore;
+            if (parsed && typeof parsed === 'object' && parsed.codes) {
+                return parsed;
+            }
         }
+    } catch {
+        // corrupted — reset
     }
-    const emptyStore: PresetStore = { codes: {}, _version: 1 };
-    blobId = await createBlob(emptyStore);
-    return { store: emptyStore, blobId };
+    return { codes: {}, _version: 2 };
+}
+
+function saveStore(store: PresetStore): void {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
 }
 
 // ── Public API ───────────────────────────────
@@ -84,14 +40,34 @@ export function isValidCode(code: string): boolean {
     return /^[A-Za-z0-9]{3,8}$/.test(code);
 }
 
-/** Get the shareable blob ID (for cross-device use) */
+/** Get the shareable store export as a Base64 string */
 export function getShareableId(): string | null {
-    return getBlobId();
+    const store = getStore();
+    if (Object.keys(store.codes).length === 0) return null;
+    try {
+        return btoa(JSON.stringify(store));
+    } catch {
+        return null;
+    }
 }
 
-/** Set the blob ID (for loading from another device) */
-export function setShareableId(id: string): void {
-    setBlobId(id);
+/** Import a store from a Base64 string (for cross-device sharing) */
+export function setShareableId(encoded: string): void {
+    try {
+        const decoded = JSON.parse(atob(encoded)) as PresetStore;
+        if (decoded && decoded.codes && typeof decoded.codes === 'object') {
+            // Merge with existing presets
+            const existing = getStore();
+            const merged: PresetStore = {
+                codes: { ...existing.codes, ...decoded.codes },
+                _version: 2,
+            };
+            saveStore(merged);
+        }
+    } catch {
+        // Invalid encoded string — ignore
+        throw new Error('Invalid Store ID format. Please paste a valid export code.');
+    }
 }
 
 /** Save the current invoice data under a short user-chosen code */
@@ -108,10 +84,12 @@ export async function savePresetToCloud(code: string, invoice: Partial<Invoice>)
     delete (data as Record<string, unknown>).discountAmount;
     delete (data as Record<string, unknown>).total;
 
-    const { store, blobId } = await getOrCreateStore();
+    const store = getStore();
     store.codes[normalizedCode] = data;
-    await updateBlob(blobId, store);
-    return blobId;
+    saveStore(store);
+
+    // Return a share code for the store
+    return btoa(JSON.stringify(store)).slice(0, 12) + '…';
 }
 
 /** Load a preset by its code */
@@ -121,25 +99,53 @@ export async function loadPresetFromCloud(code: string): Promise<Partial<Invoice
         throw new Error('Code must be 3-8 alphanumeric characters');
     }
 
-    const blobId = getBlobId();
-    if (!blobId) throw new Error('No preset store found. Enter a Store ID or save a preset first.');
-
-    const store = await fetchBlob(blobId);
+    const store = getStore();
     const data = store.codes[normalizedCode];
     if (!data) {
-        throw new Error(`No preset found for code "${normalizedCode}"`);
+        const available = Object.keys(store.codes);
+        if (available.length === 0) {
+            throw new Error('No presets saved yet. Save a preset first!');
+        }
+        throw new Error(`No preset found for code "${normalizedCode}". Available: ${available.join(', ')}`);
     }
     return data;
 }
 
 /** List all saved preset codes */
 export async function listPresetCodes(): Promise<string[]> {
-    const blobId = getBlobId();
-    if (!blobId) return [];
+    const store = getStore();
+    return Object.keys(store.codes);
+}
+
+/** Delete a preset by code */
+export async function deletePreset(code: string): Promise<void> {
+    const normalizedCode = code.toUpperCase().trim();
+    const store = getStore();
+    delete store.codes[normalizedCode];
+    saveStore(store);
+}
+
+/** Export all presets as a shareable string */
+export function exportAllPresets(): string {
+    const store = getStore();
+    return btoa(JSON.stringify(store));
+}
+
+/** Import presets from a shareable string */
+export function importPresets(encoded: string): number {
     try {
-        const store = await fetchBlob(blobId);
-        return Object.keys(store.codes);
+        const decoded = JSON.parse(atob(encoded)) as PresetStore;
+        if (!decoded?.codes) throw new Error('Invalid format');
+
+        const existing = getStore();
+        const newCodes = Object.keys(decoded.codes).filter(k => !existing.codes[k]);
+        const merged: PresetStore = {
+            codes: { ...existing.codes, ...decoded.codes },
+            _version: 2,
+        };
+        saveStore(merged);
+        return newCodes.length;
     } catch {
-        return [];
+        throw new Error('Invalid preset data. Please paste a valid export code.');
     }
 }
