@@ -52,6 +52,7 @@ export interface Theme {
     id: string;
     name: string;
     description: string;
+    templateId: 'brutalist' | 'executive' | 'midnight' | 'minimal' | 'classic' | 'tech' | 'elegant' | 'fresh';
     colors: ColorScheme;
     typography: TypographyConfig;
     layout: LayoutConfig;

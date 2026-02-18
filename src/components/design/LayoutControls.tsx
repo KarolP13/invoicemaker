@@ -6,6 +6,8 @@ interface Props {
     onChange: (updates: Partial<LayoutConfig>) => void;
 }
 
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 const LayoutControls: React.FC<Props> = ({ layout, onChange }) => (
     <div className="panel-section">
         <div className="section-label">Layout</div>
@@ -54,13 +56,15 @@ const LayoutControls: React.FC<Props> = ({ layout, onChange }) => (
                             flex: 1,
                             padding: '6px 0',
                             fontSize: 11,
+                            textAlign: 'center',
+                            justifyContent: 'center',
                             ...(layout.spacing === s
                                 ? { background: 'rgba(102,126,234,0.2)', borderColor: 'rgba(102,126,234,0.4)', color: '#fff' }
                                 : {}),
                         }}
                         onClick={() => onChange({ spacing: s })}
                     >
-                        {s}
+                        {capitalize(s)}
                     </button>
                 ))}
             </div>
@@ -80,6 +84,8 @@ const LayoutControls: React.FC<Props> = ({ layout, onChange }) => (
                             flex: 1,
                             padding: '6px 0',
                             fontSize: 11,
+                            textAlign: 'center',
+                            justifyContent: 'center',
                             ...(layout.style === s
                                 ? { background: 'rgba(102,126,234,0.2)', borderColor: 'rgba(102,126,234,0.4)', color: '#fff' }
                                 : {}),

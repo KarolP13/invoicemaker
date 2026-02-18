@@ -170,7 +170,7 @@ const PDFInvoiceDocument: React.FC<PDFProps> = ({ invoice, theme }) => {
                     <View style={{ maxWidth: '55%' }}>
                         {invoice.companyLogo && (
                             <Image
-                                src={{ uri: invoice.companyLogo, method: 'GET', headers: {}, body: '' }}
+                                src={invoice.companyLogo}
                                 style={{
                                     ...s.logo,
                                     width: Math.min(150, Math.round(100 * (invoice.logoScale || 1))),

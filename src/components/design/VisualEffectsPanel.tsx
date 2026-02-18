@@ -34,6 +34,8 @@ const Slider: React.FC<{
     </div>
 );
 
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 const VisualEffectsPanel: React.FC<Props> = ({ effects, onChange }) => (
     <div className="panel-section">
         <div className="section-label">Visual Effects</div>
@@ -76,13 +78,15 @@ const VisualEffectsPanel: React.FC<Props> = ({ effects, onChange }) => (
                             flex: 1,
                             padding: '6px 0',
                             fontSize: 11,
+                            textAlign: 'center',
+                            justifyContent: 'center',
                             ...(effects.shadowDepth === d
                                 ? { background: 'rgba(102,126,234,0.2)', borderColor: 'rgba(102,126,234,0.4)', color: '#fff' }
                                 : {}),
                         }}
                         onClick={() => onChange({ shadowDepth: d })}
                     >
-                        {d}
+                        {capitalize(d)}
                     </button>
                 ))}
             </div>
